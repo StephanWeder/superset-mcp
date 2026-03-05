@@ -57,23 +57,6 @@ export SUPERSET_VERIFY_SSL="true"
 superset-mcp-server
 ```
 
-
-## Install as Gemini CLI extension from GitHub
-
-Yes. This repository now includes a `gemini-extension.json`, so you can install it similarly to workspace extensions:
-
-```bash
-gemini extensions install https://github.com/<your-org>/superset-mcp
-```
-
-After install, set the required Superset environment variables in your Gemini CLI environment (or extension runtime config):
-
-- `SUPERSET_BASE_URL`
-- `SUPERSET_USERNAME`
-- `SUPERSET_PASSWORD`
-
-The extension startup script (`scripts/start-mcp.sh`) will create a local virtualenv, install the package, and run `superset-mcp-server`.
-
 ## Gemini CLI MCP integration
 
 Add a server entry to your Gemini CLI MCP configuration (path may vary by install):
