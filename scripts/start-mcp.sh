@@ -8,6 +8,19 @@ if [[ ! -d "${VENV_DIR}" ]]; then
   python3 -m venv "${VENV_DIR}"
 fi
 
+# Load env for Gemini/extension hosts that don't propagate shell rc files.
+if [[ -f "${ROOT_DIR}/.superset-mcp.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${ROOT_DIR}/.superset-mcp.env"
+  set +a
+elif [[ -f "${ROOT_DIR}/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${ROOT_DIR}/.env"
+  set +a
+fi
+
 source "${VENV_DIR}/bin/activate"
 
 python -m pip install --upgrade pip >/dev/null

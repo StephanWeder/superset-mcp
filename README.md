@@ -57,6 +57,44 @@ export SUPERSET_VERIFY_SSL="true"
 superset-mcp-server
 ```
 
+
+## Install as Gemini CLI extension from GitHub
+
+Yes. This repository now includes a `gemini-extension.json`, so you can install it similarly to workspace extensions:
+
+```bash
+gemini extensions install https://github.com/<your-org>/superset-mcp
+```
+
+After install, set the required Superset environment variables in your Gemini CLI environment (or extension runtime config):
+
+- `SUPERSET_BASE_URL`
+- `SUPERSET_USERNAME`
+- `SUPERSET_PASSWORD`
+
+The extension startup script (`scripts/start-mcp.sh`) will create a local virtualenv, install the package, and run `superset-mcp-server`.
+
+## When Gemini CLI does not inherit your shell env (common on macOS)
+
+Some Gemini extension hosts do not load `~/.zshrc`. This project supports file-based env loading:
+
+1. Create `.superset-mcp.env` in the extension/project directory:
+
+```bash
+cat > .superset-mcp.env <<'ENV'
+SUPERSET_BASE_URL=https://your-superset-host
+SUPERSET_USERNAME=admin
+SUPERSET_PASSWORD=your-password
+SUPERSET_AUTH_PROVIDER=db
+SUPERSET_TOKEN_REFRESH_SECONDS=1200
+SUPERSET_VERIFY_SSL=true
+ENV
+```
+
+2. Restart Gemini CLI.
+
+`start-mcp.sh` auto-loads `.superset-mcp.env` (fallback `.env`) before launching the server. You can also set `SUPERSET_ENV_FILE=/absolute/path/to/file` to point the Python server at a custom env file.
+
 ## Gemini CLI MCP integration
 
 Add a server entry to your Gemini CLI MCP configuration (path may vary by install):
