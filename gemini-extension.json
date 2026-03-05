@@ -1,0 +1,14 @@
+{
+  "name": "superset-mcp",
+  "version": "0.2.0",
+  "mcpServers": {
+    "superset": {
+      "command": "bash",
+      "args": ["scripts${/}start-mcp.sh"],
+      "cwd": "${extensionPath}",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
