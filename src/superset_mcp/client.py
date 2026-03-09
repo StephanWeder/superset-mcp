@@ -22,6 +22,7 @@ class SupersetClient:
         self._settings = settings
         self._access_token: str | None = None
         self._token_deadline: float = 0
+        self._csrf_token: str | None = None
         self._openapi_cache: dict[str, Any] | None = None
         self._client = httpx.AsyncClient(
             base_url=settings.base_url,
@@ -55,11 +56,40 @@ class SupersetClient:
 
         self._access_token = token
         self._token_deadline = time.time() + self._settings.refresh_seconds
+        self._csrf_token = None
 
     async def _auth_headers(self) -> dict[str, str]:
         if not self._access_token or time.time() >= self._token_deadline:
             await self._login()
         return {"Authorization": f"Bearer {self._access_token}"}
+
+    async def _csrf_headers(self) -> dict[str, str]:
+        if self._csrf_token:
+            return {
+                "X-CSRFToken": self._csrf_token,
+                "Referer": self._settings.base_url,
+            }
+
+        headers = await self._auth_headers()
+        response = await self._client.get(
+            "/api/v1/security/csrf_token/",
+            headers=headers,
+        )
+        if response.status_code >= 400:
+            raise SupersetApiError(
+                f"Failed to fetch CSRF token ({response.status_code}): {response.text[:500]}"
+            )
+
+        payload = response.json()
+        token = payload.get("result") or payload.get("csrf_token")
+        if not token:
+            raise SupersetApiError("CSRF token endpoint succeeded but no token was returned")
+
+        self._csrf_token = str(token)
+        return {
+            "X-CSRFToken": self._csrf_token,
+            "Referer": self._settings.base_url,
+        }
 
     async def request(
         self,
@@ -70,6 +100,8 @@ class SupersetClient:
         json_body: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         headers = await self._auth_headers()
+        if method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
+            headers.update(await self._csrf_headers())
         response = await self._client.request(
             method,
             path,
@@ -81,6 +113,8 @@ class SupersetClient:
         if response.status_code == 401:
             await self._login()
             headers = await self._auth_headers()
+            if method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
+                headers.update(await self._csrf_headers())
             response = await self._client.request(
                 method,
                 path,
